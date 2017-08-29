@@ -1308,6 +1308,8 @@ gtk_snapshot_render_focus (GtkSnapshot     *snapshot,
   gtk_snapshot_offset (snapshot, -x, -y);
 }
 
+extern PangoRenderer *gtk_gsk_layout_renderer_new (GtkSnapshot *snapshot);
+
 /**
  * gtk_snapshot_render_layout:
  * @snapshot: a #GtkSnapshot
@@ -1335,6 +1337,7 @@ gtk_snapshot_render_layout (GtkSnapshot     *snapshot,
   PangoRectangle ink_rect;
   GtkCssValue *shadow;
   cairo_t *cr;
+  PangoRenderer *renderer;
 
   g_return_if_fail (snapshot != NULL);
   g_return_if_fail (GTK_IS_STYLE_CONTEXT (context));
@@ -1352,6 +1355,12 @@ gtk_snapshot_render_layout (GtkSnapshot     *snapshot,
 
   gtk_snapshot_offset (snapshot, x, y);
 
+  renderer = gtk_gsk_layout_renderer_new (snapshot);
+  pango_renderer_draw_layout (renderer, layout, 0, 0);
+
+  g_object_unref (renderer);
+#if 0
+
   cr = gtk_snapshot_append_cairo (snapshot, &bounds, "Text<%dchars>", pango_layout_get_character_count (layout));
 
   _gtk_css_shadows_value_paint_layout (shadow, cr, layout);
@@ -1360,6 +1369,7 @@ gtk_snapshot_render_layout (GtkSnapshot     *snapshot,
   pango_cairo_show_layout (cr, layout);
 
   cairo_destroy (cr);
+#endif
   gtk_snapshot_offset (snapshot, -x, -y);
 }
 

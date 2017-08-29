@@ -1251,3 +1251,149 @@ _gtk_pango_attr_list_merge (PangoAttrList *into,
 
   return into;
 }
+
+/* FIXME: find a better place for this */
+
+#include "gtksnapshot.h"
+
+
+#define GTK_TYPE_GSK_LAYOUT_RENDERER            (gtk_gsk_layout_renderer_get_type())
+#define GTK_GSK_LAYOUT_RENDERER(object)         (G_TYPE_CHECK_INSTANCE_CAST ((object), GTK_TYPE_GSK_LAYOUT_RENDERER, GtkGskLayoutRenderer))
+#define GTK_IS_GSK_LAYOUT_RENDERER(object)      (G_TYPE_CHECK_INSTANCE_TYPE ((object), GTK_TYPE_GSK_LAYOUT_RENDERER))
+#define GTK_GSK_LAYOUT_RENDERER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_GSK_LAYOUT_RENDERER, GtkGskLayoutRendererClass))
+#define GTK_IS_GSK_LAYOUT_RENDERER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_GSK_LAYOUT_RENDERER))
+#define GTK_GSK_LAYOUT_RENDERER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_GSK_LAYOUT_RENDERER, GtkGskLayoutRendererClass))
+
+typedef struct _GtkGskLayoutRenderer      GtkGskLayoutRenderer;
+typedef struct _GtkGskLayoutRendererClass GtkGskLayoutRendererClass;
+
+struct _GtkGskLayoutRenderer
+{
+  PangoRenderer parent_instance;
+
+  GtkSnapshot *snapshot;
+};
+
+struct _GtkGskLayoutRendererClass
+{
+  PangoRendererClass parent_class;
+};
+
+GType gtk_gsk_layout_renderer_get_type (void);
+
+G_DEFINE_TYPE (GtkGskLayoutRenderer, gtk_gsk_layout_renderer, PANGO_TYPE_RENDERER)
+
+static void
+gtk_gsk_layout_renderer_draw_glyphs (PangoRenderer     *renderer,
+                                      PangoFont         *font,
+                                      PangoGlyphString  *glyphs,
+                                      int                x,
+                                      int                y)
+{
+  GtkGskLayoutRenderer *gsk_renderer = (GtkGskLayoutRenderer *)renderer;
+  GskRenderNode *node;
+
+  node = gsk_text_node_new (font, x, y, glyphs);
+  gtk_snapshot_append_node (gsk_renderer->snapshot, node);
+  gsk_render_node_unref (node);
+}
+
+static void
+gtk_gsk_layout_renderer_draw_glyph_item (PangoRenderer     *renderer,
+                                          const char        *text,
+                                          PangoGlyphItem    *glyph_item,
+                                          int                x,
+                                          int                y)
+{
+  gtk_gsk_layout_renderer_draw_glyphs (renderer,
+                                       glyph_item->item->analysis.font,
+                                       glyph_item->glyphs,
+                                       x, y);
+}
+
+static void
+gtk_gsk_layout_renderer_draw_rectangle (PangoRenderer     *renderer,
+                                         PangoRenderPart    part,
+                                         int                x,
+                                         int                y,
+                                         int                width,
+                                         int                height)
+{
+  g_print ("draw rectangle part %d x %d y %d width %d height %d\n",
+           part, x, y, width, height);
+}
+
+static void
+gtk_gsk_layout_renderer_draw_trapezoid (PangoRenderer     *renderer,
+                                         PangoRenderPart    part,
+                                         double             y1_,
+                                         double             x11,
+                                         double             x21,
+                                         double             y2,
+                                         double             x12,
+                                         double             x22)
+{
+  g_print ("draw trapezoid part %d y1 %g x11 %g x21 %g y2 %g x12 %g x22 %g\n",
+           part, y1_, x11, x21, y2, x12, x22);
+}
+
+static void
+gtk_gsk_layout_renderer_draw_error_underline (PangoRenderer *renderer,
+                                               int            x,
+                                               int            y,
+                                               int            width,
+                                               int            height)
+{
+  g_print ("draw error underline x %d y %d width %d height %d\n",
+           x, y, width, height);
+}
+
+static void
+gtk_gsk_layout_renderer_draw_shape (PangoRenderer   *renderer,
+                                     PangoAttrShape  *attr,
+                                     int              x,
+                                     int              y)
+{
+  g_print ("draw shape x %d y %d\n", x, y);
+}
+
+static void
+gtk_gsk_layout_renderer_finalize (GObject *object)
+{
+  G_OBJECT_CLASS (gtk_gsk_layout_renderer_parent_class)->finalize (object);
+}
+
+static void
+gtk_gsk_layout_renderer_init (GtkGskLayoutRenderer *renderer)
+{
+}
+
+static void
+gtk_gsk_layout_renderer_class_init (GtkGskLayoutRendererClass *klass)
+{
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+  PangoRendererClass *renderer_class = PANGO_RENDERER_CLASS (klass);
+
+  renderer_class->draw_glyphs = gtk_gsk_layout_renderer_draw_glyphs;
+  renderer_class->draw_glyph_item = gtk_gsk_layout_renderer_draw_glyph_item;
+  renderer_class->draw_rectangle = gtk_gsk_layout_renderer_draw_rectangle;
+  renderer_class->draw_trapezoid = gtk_gsk_layout_renderer_draw_trapezoid;
+  renderer_class->draw_error_underline = gtk_gsk_layout_renderer_draw_error_underline;
+  renderer_class->draw_shape = gtk_gsk_layout_renderer_draw_shape;
+
+  object_class->finalize = gtk_gsk_layout_renderer_finalize;
+}
+
+PangoRenderer *
+gtk_gsk_layout_renderer_new (GtkSnapshot *snapshot)
+{
+  GtkGskLayoutRenderer *renderer;
+
+  renderer = g_object_new (gtk_gsk_layout_renderer_get_type (), NULL);
+
+  renderer->snapshot = snapshot;
+
+  return PANGO_RENDERER (renderer);
+}
+
