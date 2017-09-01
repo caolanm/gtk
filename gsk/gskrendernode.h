@@ -175,13 +175,14 @@ GskRenderNode *         gsk_cross_fade_node_new                 (GskRenderNode  
                                                                  double                    progress);
 
 GDK_AVAILABLE_IN_3_92
-GskRenderNode *         gsk_text_node_new                       (PangoFont        *font,
-                                                                 PangoGlyphString *glyphs,
-                                                                 const GdkRGBA    *color,
-                                                                 int               x_offset,
-                                                                 int               y_offset,
-                                                                 double            base_x,
-                                                                 double            base_y);
+GskRenderNode *         gsk_text_node_new                       (cairo_scaled_font_t *font,
+                                                                 cairo_glyph_t       *glyphs,
+                                                                 int                  num_glyphs,
+                                                                 const GdkRGBA       *color,
+                                                                 int                  x_offset,
+                                                                 int                  y_offset,
+                                                                 double               base_x,
+                                                                 double               base_y);
 
 GDK_AVAILABLE_IN_3_90
 void                    gsk_render_node_set_scaling_filters     (GskRenderNode *node,
