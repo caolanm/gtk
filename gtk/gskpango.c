@@ -111,7 +111,7 @@ gsk_pango_renderer_draw_unknown_glyph (GskPangoRenderer *crenderer,
 
   gdk_cairo_set_source_rgba (cr, crenderer->fg_color);
 
-  cairo_move_to (cr, cx, cy);
+  cairo_move_to (cr, cx, 0);
 
   glyphs = pango_glyph_string_new ();
   pango_glyph_string_set_size (glyphs, 1);
